@@ -1,0 +1,80 @@
+---
+title: "ej7"
+output: pdf_document
+date: "2023-11-09"
+---
+
+```{r setup, include=FALSE}
+
+rm(list = ls(all.names = TRUE))
+gc()
+
+# Configuración global de los bloques de código (chunk's)
+knitr::opts_chunk$set(echo = FALSE,
+                      fig.align = "center",
+                      fig.pos = "H", 
+                      fig.dim = c(4.24,2.24))
+# Librerías      
+#Recordar que previo al cargue de librerias estas se deben instalar primero.
+#Luego si cargarlas:
+library(readxl) #Para leer el xls
+library(forecast)# Contiene el modelo ARIMA
+library(tseries) #Para series de tiempo
+library(TSA)     #Para series de tiempo
+library(urca)    #Para hacer el Test de Raiz Unitaria (detectar hay o no estacionariedad)
+library(ggplot2) #Para hacer gráficos
+library(dplyr)   #Para la manipulación de datos (filtrar, seleccionar, agregar, transformar)
+library(stats)   #Se usa para diversas pruebas estadísticas (medias,varianza, arima,etc)
+library(seasonal)#Para calcular la serie ajustada de estacionalidad
+library(readr)
+library(dplyr)
+library(TSstudio)
+options(digits = 17)
+```
+
+## 
+
+```{r message=FALSE, warning=FALSE}
+PIB <- read_csv("PIB.csv")
+ts_PIB<-ts(PIB$PIB, frequency = 4, start = c(1980,1))
+PIB_1<-PIB[-c(169:174),]
+ts_PIB1<-ts(PIB_1$PIB,frequency = 4, start = c(1980,1))
+dummys<-as.matrix(PIB_1[,3:6])
+model2<-auto.arima(ts_PIB1)
+summary(model2)
+```
+
+```{r echo=TRUE}
+autoplot(ts_PIB1,ylab = "PIB", xlab = "Años", main = "Producto interno bruto trimestral en México (1980-2021)")
+```
+
+```{r}
+decomposicion<-decompose(ts_PIB1,type = "additive")
+plot(decomposicion,col="red",ylab="eje y",xlab="Años",lwd=.5,type="l",pch=5)
+log_ts_PIB1 <- log(ts_PIB1)
+```
+
+```{r}
+autoplot(log_ts_PIB1,ylab = "PIB", xlab = "Años", main = "Producto interno bruto trimestral en México (1980-2021) con transformacion logaritmica")
+model1<-auto.arima(log_ts_PIB1)
+summary(model1)
+
+```
+
+```{r}
+Box.test(model1$residuals)
+jarque.bera.test(model1$residuals)
+```
+
+```{r}
+pronostico1<-forecast(model1,level= c(95), h=6)
+plot(pronostico1)
+pronostico1
+```
+
+```{r}
+summary(model2)
+Box.test(model2$residuals)
+jarque.bera.test(model2$residuals)
+shapiro.test(model2$residuals)
+```
